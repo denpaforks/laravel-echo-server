@@ -3,7 +3,7 @@ import { Channel } from './channels';
 import { Server } from './server';
 import { HttpApi } from './api';
 import { Log } from './log';
-
+import * as fs from 'fs';
 const packageFile = require('../package.json');
 
 /**
@@ -33,7 +33,14 @@ export class EchoServer {
         socketio: {},
         sslCertPath: '',
         sslKeyPath: '',
-        sslPassphrase: ''
+        sslCertChainPath: '',
+        sslPassphrase: '',
+        apiOriginAllow: {
+            allowCors: false,
+            allowOrigin: '',
+            allowMethods: '',
+            allowHeaders: ''
+        }
     };
 
     /**
@@ -114,11 +121,11 @@ export class EchoServer {
             this.channel = new Channel(io, this.options);
             this.redisSub = new RedisSubscriber(this.options);
             this.httpSub = new HttpSubscriber(this.server.express, this.options);
-            this.httpApi = new HttpApi(io, this.channel, this.server.express);
+            this.httpApi = new HttpApi(io, this.channel, this.server.express, this.options.apiOriginAllow);
             this.httpApi.init();
 
             this.onConnect();
-            this.listen().then(() => resolve());
+            this.listen().then(() => resolve(), err => Log.error(err));
         });
     }
 
